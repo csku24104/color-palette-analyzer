@@ -70,18 +70,15 @@ flowchart LR
     User --> UC3
     User --> UC4
     User --> UC5
-    UC1 -.->|<< include >>| UC2
-    UC2 -.->|<< include >>| UC2_1
-    UC2 -.->|<< include >>| UC2_2
-    UC5 -.->|<< include >>| UC5_1
-    UC5_2 -.->|<< extend >>| UC5
-    UC5_3 -.->|<< extend >>| UC5
+    UC1 -.->|include| UC2
+    UC2 -.->|include| UC2_1
+    UC2 -.->|include| UC2_2
+    UC5 -.->|include| UC5_1
+    UC5_2 -.->|extend| UC5
+    UC5_3 -.->|extend| UC5
 ```
 
-#### ② クラス図（修正版）
-クラス図の中の `Tuple<List, List>` や `List<string>` に使われている `<` と `>` もエラーの原因になるため、GitHub用に `~`（チルダ）を使った安全な記法に修正しました。こちらも差し替えてください。
-
-```markdown
+### ②　クラス図
 ```mermaid
 classDiagram
     direction TB
@@ -120,8 +117,9 @@ classDiagram
     PaletteRepository "1" ..> "*" SavedPalette : 操作 (JSON/DB永続化)
 ```
 
-### ③シークエンス図
+###　③シーケンス図
 ```mermaid
+sequenceDiagram
     autonumber
     actor User as ユーザー(イラストレーター)
     participant UI as PaletteApp (UI画面)
@@ -166,8 +164,9 @@ classDiagram
     end
 ```
 
-### ④状態遷移図
+###　④状態遷移図
 ```mermaid
+stateDiagram-v2
     [*] --> 未生成 : アプリ起動 / 初期状態
     state 未生成 {
         [*] --> 待機中
@@ -190,3 +189,4 @@ classDiagram
     永続化状態 (JSON保存済み) --> 削除処理状態 : 「削除」ボタンのクリック(トリガー: Delete Button Clicked)
     削除処理状態 --> [*] : メモリおよびJSONファイルからデータ消去 / 終了状態
 ```
+    
