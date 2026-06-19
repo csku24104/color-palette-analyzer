@@ -78,7 +78,7 @@ flowchart LR
     UC5_3 -.->|extend| UC5
 ```
 
-### ②　クラス図
+### ② クラス図
 ```mermaid
 classDiagram
     direction TB
@@ -117,7 +117,7 @@ classDiagram
     PaletteRepository "1" ..> "*" SavedPalette : 操作 (JSON/DB永続化)
 ```
 
-###　③シーケンス図
+### ③ シーケンス図
 ```mermaid
 sequenceDiagram
     autonumber
@@ -164,7 +164,7 @@ sequenceDiagram
     end
 ```
 
-###　④状態遷移図
+### ④ 状態遷移図
 ```mermaid
 stateDiagram-v2
     [*] --> 未生成 : アプリ起動 / 初期状態
