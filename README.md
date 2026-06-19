@@ -76,8 +76,10 @@ flowchart LR
     UC5 -.->|<< include >>| UC5_1
     UC5_2 -.->|<< extend >>| UC5
     UC5_3 -.->|<< extend >>| UC5
+```
 
-classDiagram
+### ②クラス図
+```mermaid
     direction TB
     class PaletteApp {
         <<Boundary>>
@@ -112,8 +114,10 @@ classDiagram
     PaletteApp "1" --> "1" ImageProcessor : 利用
     PaletteApp "1" --> "1" PaletteRepository : 利用
     PaletteRepository "1" ..> "*" SavedPalette : 操作 (JSON/DB永続化)
+```
 
-sequenceDiagram
+### ③シークエンス図
+```mermaid
     autonumber
     actor User as ユーザー(イラストレーター)
     participant UI as PaletteApp (UI画面)
@@ -156,8 +160,10 @@ sequenceDiagram
         deactivate Model
         deactivate UI
     end
+```
 
-stateDiagram-v2
+### ④状態遷移図
+```mermaid
     [*] --> 未生成 : アプリ起動 / 初期状態
     state 未生成 {
         [*] --> 待機中
@@ -179,3 +185,4 @@ stateDiagram-v2
     }
     永続化状態 (JSON保存済み) --> 削除処理状態 : 「削除」ボタンのクリック(トリガー: Delete Button Clicked)
     削除処理状態 --> [*] : メモリおよびJSONファイルからデータ消去 / 終了状態
+```
