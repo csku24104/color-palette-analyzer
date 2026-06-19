@@ -78,8 +78,12 @@ flowchart LR
     UC5_3 -.->|<< extend >>| UC5
 ```
 
-### ②クラス図
+#### ② クラス図（修正版）
+クラス図の中の `Tuple<List, List>` や `List<string>` に使われている `<` と `>` もエラーの原因になるため、GitHub用に `~`（チルダ）を使った安全な記法に修正しました。こちらも差し替えてください。
+
+```markdown
 ```mermaid
+classDiagram
     direction TB
     class PaletteApp {
         <<Boundary>>
