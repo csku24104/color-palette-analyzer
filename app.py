@@ -1,88 +1,134 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
+import pandas as pd
 from sklearn.cluster import KMeans
+import plotly.express as px
 
 def extract_colors(image, num_colors=5, exclude_bw=False):
-    # 1. 計算量削減のため、画像をリサイズ (150x150程度で十分な精度が出ます)
+    """
+    K-means法を用いて画像から主要な色とその割合を抽出する
+    """
+    # 1. 計算量削減のため、画像をリサイズ
     image = image.copy()
     image.thumbnail((150, 150))
-    image = image.convert("RGB")
     
-    # 2. 画像をnumpy配列に変換し、(ピクセル数, 3)の形にリシェイプ
-    pixels = np.array(image).reshape(-1, 3)
+    # 2. 透過PNG対応: RGBAで読み込み
+    image = image.convert("RGBA")
+    pixels = np.array(image).reshape(-1, 4)
     
-    # 3. 白・黒の除外処理
+    # 3. 透過ピクセル（アルファ値が低い部分）を完全に除外
+    mask_opaque = pixels[:, 3] > 200
+    pixels = pixels[mask_opaque]
+    
+    # RGBのみを取り出す
+    pixels = pixels[:, :3] 
+    
+    # 4. 白・黒の除外処理
     if exclude_bw:
-        # 白: RGBすべてが240以上 / 黒: RGBすべてが15以下 (閾値は調整可能です)
         mask_white = np.all(pixels > 240, axis=1)
         mask_black = np.all(pixels < 15, axis=1)
-        mask_valid = ~(mask_white | mask_black) # 白でも黒でもないピクセルを残す
+        mask_valid = ~(mask_white | mask_black)
         pixels = pixels[mask_valid]
         
-        # もし除外した結果、ピクセルが指定色数未満になってしまった場合のフェイルセーフ
-        if len(pixels) < num_colors:
-            return None
+    # フェイルセーフ
+    if len(pixels) < num_colors:
+        return None, None
             
-    # 4. K-means法で色をクラスタリング
-    # n_init="auto" はscikit-learnの警告を回避するため
+    # 5. K-means法で色をクラスタリング
     kmeans = KMeans(n_clusters=num_colors, random_state=42, n_init="auto")
     kmeans.fit(pixels)
     
-    # クラスタの中心（代表色）を整数化して返す
+    # 代表色（クラスタの中心）
     colors = kmeans.cluster_centers_.astype(int)
-    return colors
+    
+    # 各色の割合を計算
+    counts = np.bincount(kmeans.labels_)
+    proportions = counts / counts.sum()
+    
+    return colors, proportions
 
 def display_palette(colors):
-    """抽出した色をStreamlit上でカラーパレットとして綺麗に表示する関数"""
+    """抽出した色をパレットとして表示し、コードをコピー可能にする"""
     cols = st.columns(len(colors))
     for i, col in enumerate(cols):
-        # RGBをHexコード（16進数）に変換
         hex_color = '#{:02x}{:02x}{:02x}'.format(colors[i][0], colors[i][1], colors[i][2])
         with col:
-            # HTMLを使って色付きの四角形を描画
-            st.markdown(f'<div style="background-color: {hex_color}; height: 50px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 5px;"></div>', unsafe_allow_html=True)
-            st.caption(hex_color)
+            st.markdown(
+                f'<div style="background-color: {hex_color}; height: 60px; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 5px;"></div>', 
+                unsafe_allow_html=True
+            )
+            # st.codeを使うことで、ワンクリックでコピー可能にする
+            st.code(hex_color, language="")
 
 def main():
-    st.set_page_config(page_title="Color Palette Analyzer", layout="centered")
-    st.title("🎨 Color Palette Analyzer")
-    st.write("イラストをアップロードして、色彩設計をサポートするアプリです。")
+    st.set_page_config(page_title="Color Palette Analyzer Pro", layout="centered")
+    st.title("🎨 Color Palette Analyzer Pro")
+    st.write("イラストの色彩設計をAIが分析し、パレットと構成比率を可視化します。")
 
     uploaded_file = st.file_uploader(
-        "解析したいイラストを選択してください (対応形式: PNG, JPG, JPEG) \n\n※一度にアップロードできるイラストは1枚のみです"
+        "イラストをアップロード (PNG, JPG, JPEG) \n\n※一度に1枚のみ対応",
+        type=["png", "jpg", "jpeg"]
     )
 
     if uploaded_file is not None:
-        file_name = uploaded_file.name.lower()
-        if not file_name.endswith(('.png', '.jpg', '.jpeg')):
-            st.error("❌ 対応していないファイル形式です。PNG, JPG, JPEGのいずれかをアップロードしてください。")
-        else:
-            try:
-                image = Image.open(uploaded_file)
-                st.subheader("アップロードされたイラスト")
-                st.image(image, caption="解析対象の画像", use_container_width=True)
-                st.success("✅ 画像の読み込みに成功しました！")
-                
-                st.divider() # 区切り線
-                
-                # 【新規追加】抽出設定のUI
-                st.subheader("⚙️ 抽出設定")
-                exclude_bw = st.checkbox("背景の白・黒を抽出から除外する")
-                
-                if st.button("代表色を抽出する", type="primary"):
-                    with st.spinner("K-means法で色を分析中..."):
-                        colors = extract_colors(image, num_colors=5, exclude_bw=exclude_bw)
+        try:
+            image = Image.open(uploaded_file)
+            st.subheader("🖼️ 解析対象")
+            st.image(image, use_container_width=True)
+            
+            st.divider()
+            
+            # --- ⚙️ 抽出設定セクション ---
+            st.subheader("⚙️ 抽出設定")
+            col_cfg1, col_cfg2 = st.columns(2)
+            
+            with col_cfg1:
+                # 【新規】色数スライダー
+                num_colors = st.slider("抽出する色数", min_value=3, max_value=10, value=5)
+            
+            with col_cfg2:
+                # 白黒除外チェック
+                exclude_bw = st.checkbox("背景の白・黒を除外する", value=True)
+            
+            if st.button("✨ 色彩を分析する", type="primary", use_container_width=True):
+                with st.spinner("AIが色彩をクラスタリング中..."):
+                    colors, proportions = extract_colors(image, num_colors=num_colors, exclude_bw=exclude_bw)
+                    
+                    if colors is None:
+                        st.warning("⚠️ 有効なピクセルが不足しています。除外設定を見直してください。")
+                    else:
+                        # --- 🎨 結果表示セクション ---
+                        st.subheader("🎨 抽出されたカラーパレット")
+                        display_palette(colors)
                         
-                        if colors is None:
-                            st.warning("⚠️ 画像内の有効な色が少なすぎるため、抽出できませんでした（白・黒を除外しすぎた可能性があります）。")
-                        else:
-                            st.subheader("抽出されたカラーパレット")
-                            display_palette(colors)
+                        # --- 📊 割合表示（円グラフ）セクション ---
+                        st.subheader("📊 色彩構成比率")
+                        
+                        # Plotly用のデータ準備
+                        hex_colors = ['#{:02x}{:02x}{:02x}'.format(c[0], c[1], c[2]) for c in colors]
+                        df_plot = pd.DataFrame({
+                            "Color": hex_colors,
+                            "Ratio": proportions
+                        })
+                        
+                        # 円グラフの作成
+                        fig = px.pie(
+                            df_plot, 
+                            values="Ratio", 
+                            names="Color",
+                            color="Color",
+                            color_discrete_map={c: c for c in hex_colors}, # グラフの色を実際の抽出色に合わせる
+                            hole=0.4 # ドーナツチャートにする
+                        )
+                        fig.update_traces(textinfo='percent+label')
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        st.success("✅ 全ての分析が完了しました！")
                 
-            except Exception as e:
-                st.error("❌ 画像の読み込みに失敗しました。ファイルが破損している可能性があります。")
-                st.caption(f"エラー詳細: {e}")
+        except Exception as e:
+            st.error("❌ 画像の解析中にエラーが発生しました。")
+            st.caption(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
