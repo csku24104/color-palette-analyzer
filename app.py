@@ -174,6 +174,9 @@ def render_analysis_page():
             
             st.divider()
             st.subheader("💾 パレットを保存")
+
+            st.info("💡 【お知らせ】ホスティングの仕様上、保存・編集したパレットデータはアプリがスリープするとリセット（揮発）されます。デモ用としてお楽しみください。", icon="ℹ️")
+            
             with st.form("save_palette_form"):
                 palette_name = st.text_input("パレット名を入力", placeholder="例：メインキャラクター配色")
                 submitted = st.form_submit_button("このパレットを保存する")
@@ -232,6 +235,9 @@ def main():
     
     st.sidebar.title("メニュー")
     mode = st.sidebar.radio("", ["🎨 解析モード", "📂 保存済みパレット"])
+
+    st.sidebar.markdown("---")
+    st.sidebar.caption("※デモ環境のため、保存データは一定時間でリセットされます")
     
     if mode == "🎨 解析モード":
         render_analysis_page()
