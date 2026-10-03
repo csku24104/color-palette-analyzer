@@ -4,7 +4,7 @@
 
 🚀 デモアプリはこちら:https://color-palette-analyzer.streamlit.app/
 ---
-🚀 動画による解説はこちら（音量注意）:https://youtu.be/9DTbGshZll0
+🚀 動画による解説はこちら（音量あり）:https://youtu.be/9DTbGshZll0
 ---
 
 ## ⚠️ 注意事項（デモ環境の仕様について）
