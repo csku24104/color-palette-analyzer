@@ -3,6 +3,7 @@
 イラスト制作における色彩設計の悩みを解決し、客観的なデータに基づいて配色を最適化・ストックできるWebアプリケーションです。
 
 🚀 デモアプリはこちら:https://color-palette-analyzer.streamlit.app/
+🚀 動画による解説はこちら（音量注意）:https://youtu.be/9DTbGshZll0
 ---
 
 ## ⚠️ 注意事項（デモ環境の仕様について）
